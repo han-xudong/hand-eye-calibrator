@@ -8,6 +8,21 @@ import { CheckSquare } from 'lucide-react';
 import { detectChessboardsBatch, detectChessboard } from './services/chessboardDetection';
 import { runHandEyeCalibration, quaternionToRotationMatrix } from './services/handEyeCalibration';
 
+type ImportedPose = {
+  file_name: string;
+  image_id?: string;
+  x?: number;
+  y?: number;
+  z?: number;
+  rx?: number;
+  ry?: number;
+  rz?: number;
+  w?: number;
+  xq?: number;
+  yq?: number;
+  zq?: number;
+};
+
 const Home: React.FC = () => {
   // State definitions
   const [calibrationType, setCalibrationType] = useState<'eye-in-hand' | 'eye-to-hand'>('eye-in-hand');
@@ -480,7 +495,7 @@ const Home: React.FC = () => {
                             reader.onload = (event) => {
                               try {
                                 const content = event.target?.result as string;
-                                let poses = [];
+                                let poses: ImportedPose[] = [];
                                 
                                 // Parse based on file type
                                 // Parse based on file type
@@ -532,19 +547,7 @@ const Home: React.FC = () => {
                                   // Parse data rows
                                   poses = dataLines.slice(1).map((line, index) => {
                                     const values = line.split(',').map(v => v.trim());
-                                    const pose: { 
-                                      file_name: string; 
-                                      x?: number; 
-                                      y?: number; 
-                                      z?: number; 
-                                      rx?: number; 
-                                      ry?: number; 
-                                      rz?: number; 
-                                      w?: number; 
-                                      xq?: number; 
-                                      yq?: number; 
-                                      zq?: number;
-                                    } = {
+                                    const pose: ImportedPose = {
                                       file_name: values[headers.indexOf('file_name')]
                                     };
                                     
@@ -579,10 +582,10 @@ const Home: React.FC = () => {
                                   
                                   // Check if all pose file_names match with uploaded images
                                   const imageNames = new Set(images.map(img => img.name));
-                                  const invalidPoses = poses.filter((pose: { file_name: string }) => !imageNames.has(pose.file_name));
+                                  const invalidPoses = poses.filter((pose) => !imageNames.has(pose.file_name));
                                   
                                   if (invalidPoses.length > 0) {
-                                    const invalidNames = invalidPoses.map((pose: { file_name: string }) => pose.file_name).join(', ');
+                                    const invalidNames = invalidPoses.map((pose) => pose.file_name).join(', ');
                                     showModal('Import Error', `The following file names could not be found in uploaded images: ${invalidNames}`);
                                     return;
                                   }
@@ -591,7 +594,7 @@ const Home: React.FC = () => {
                                   const newTcpPoses = [...tcpPoses];
                                   
                                   // Map poses to images based on file_name
-                                  poses.forEach((pose: any) => {
+                                  poses.forEach((pose) => {
                                     // Find the image index by matching file_name with images array
                                     const imageIndex = images.findIndex(img => img.name === pose.file_name);
                                     
